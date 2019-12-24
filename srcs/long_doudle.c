@@ -6,14 +6,33 @@
 /*   By: pstein <pstein@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/11/21 17:31:34 by gfreddie          #+#    #+#             */
-/*   Updated: 2019/12/15 12:13:26 by gfreddie         ###   ########.fr       */
+/*   Updated: 2019/12/22 13:11:20 by gfreddie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/ft_printf.h"
 #include <stdio.h>
 
-char				*str_rewrite(char *str, int i)
+char				*strchr_cpy(char *str, char s)
+{
+	int		index;
+	char	*str_new;
+
+	index = 0;
+	while (str[index] != s)
+		index++;
+	str_new = (char *)malloc(sizeof(char) * (index + 1));
+	str_new[index] = '\0';
+	index = 0;
+	while (str[index] != s)
+	{
+		str_new[index] = str[index];
+		index++;
+	}
+	return (str_new);
+}
+
+char				*str_rewrite(char *str, unsigned long long i)
 {
 	int		j;
 	char	*str_new;
@@ -85,51 +104,40 @@ char				*normalizer(char *str, char *str1)
 {
 	char	*str_new;
 	char	*str1_new;
-	int		i;
-	int		fix;
-	int		len;
+	long long int		i;
+	long long int		len;
+	long long int		j;
 
+	j = 0;
 	len = ft_ssttrr_len(str);
-	len--;
-	fix = 0;
-	i = len;
-	if (len == 0)
-	{
-		str_new = (char *)malloc(sizeof(char) * (2));
-		str_new[0] = '0';
-		str_new[1] = '\0';
-		i = 0;
-	}
-	else
-	{
-		while (str[i] == '0')
-			i--;
-		str_new = (char *)malloc(sizeof(char) * (i + 2));
-		str_new[i + 1] = '\0';
-		fix = i + 1;
-		len = 0;
-	}
-	while (len < fix)
-	{
-		str_new[len] = str[i];
-		len++;
+	i = len - 1;
+	printf("Norm Start");
+	while (str[i] == '0' && i > 0)
 		i--;
-	}
-	len = ft_ssttrr_len(str1);
-	str1_new = (char *)malloc(sizeof(char) * (len + 1));
-	str1_new[len] = '\0';
-	len--;
-	i = 0;
-	while (len >= 0)
+	str_new = (char *)malloc(sizeof(char) * (i + 2));
+	str_new[i + 1] = '\0';
+	while (i >= 0)
 	{
-		str1_new[i] = str1[len];
-		i++;
-		len--;
+		str_new[j] = str[i];
+		i--;
+		j++;
 	}
+	j = 0;
+	i = 0;
+	while (str1[i] == '0' && i < 19999)
+		i++;
+	str1_new = (char *)malloc(sizeof(char) * (20000 - i + 1));
+	str1_new[20000 - i] = '\0';
+	while (i <= 19999)
+	{
+		str1_new[19999 - i] = str1[i];
+		i++;
+	}
+	printf("Norm end");
 	return (ft_strplus(ft_strplus(str_new, ".", 1, 0), str1_new, 1, 1));
 }
 
-char				*zero_str(int	i)
+char				*zero_str(long long int	i)
 {
 	char	*str;
 
@@ -284,22 +292,27 @@ char		*okruglenie(char *str, int precision)
 {
 	char	*str_plus;
 	int		i;
+	int		point;
 	int		fix;
 
+	point = 0;
 	str_plus = NULL;
+	printf("LALAL");
 	i = check_after_stop(str);
 	fix = i;
-	while (str[i] && precision)
-	{
-		precision--;
+	if (str[i + 1] >= '5' && str[i + 1] <= '9' && precision == 0)
+		return (str_revers (long_plus(str_revers(str), str_revers(ft_strjoin(ft_strjoin(zero_str(i - 1), "10"),
+								zero_str(ft_ssttrr_len(str) - i - 1))))));
+	if (str[i + 1] <= '4' && precision == 0)
+		return (str_rewrite(str, i));
+	while (str[i] && precision > i - fix)
 		i++;
-	}
-	if (precision)
+	if (precision != i - fix)
 	{
-		str = ft_strplus(str, zero_str(precision), 1, 1);
+		str = ft_strplus(str, zero_str(precision - i + fix + 1), 1, 1);
 		return (str);
 	}
-	if (precision == 0)
+	if (precision == i - fix)
 	{
 		i++;
 		if (str[i] >= '5' && str[i] <= '9')
@@ -317,7 +330,7 @@ char		*okruglenie(char *str, int precision)
 	return (str);
 }
 
-//ft_strplus - стрджоин который фришит пишется ft_strplus(char *s1, char *s2, int i, int j) где i и j говорят фришить строу или нет 
+//ft_strplus - стрджоин который фришит пишется ft_strplus(char *s1, char *s2, int i, int j) где i и j говорят фришить строу или нет
 
 int			mod(int exp)
 {
@@ -430,10 +443,9 @@ char			*whole_part(char *str, long int exp, int precision)
 	char	*str_plus;
 	char	*result;
 
-	printf("str = %s\n", str);
 	i = 0;
-	str00 = zero_str(1000);
-	str01 = zero_str(1000);
+	str00 = zero_str(20000);
+	str01 = zero_str(20000);
 	while (str[i])
 	{
 		if (str[i] == '1')
@@ -441,20 +453,21 @@ char			*whole_part(char *str, long int exp, int precision)
 			if (exp >= 0)
 			{
 				str_plus = double_power(exp);
-				str00 = long_plus(str00, ft_strjoin(str_plus, zero_str(1000 - ft_ssttrr_len(str_plus))));
+				str00 = long_plus(str00, ft_strjoin(str_plus, zero_str(20000 - ft_ssttrr_len(str_plus))));
 			}
 			else
 			{
 				str_plus = str_small_part(mod(exp));
-				str01 = long_plus(str01, ft_strjoin(zero_str(1000 - ft_ssttrr_len(str_plus)), str_plus));
+				str01 = long_plus(str01, ft_strjoin(zero_str(20000 - ft_ssttrr_len(str_plus)), str_plus));
 			}
 		}
 		i++;
 		exp--;
 	}
-	printf("str00 = %s\n", str00);
-	printf("str01 = %s\n", str01);
+	printf("Start");
 	result = okruglenie(normalizer(str00, str01), precision);
+	if (precision == 0)
+		result = strchr_cpy(result, '.');
 	if (result[0] == '.')
 		result = ft_strjoin("0", result);
 	return(result);
@@ -471,6 +484,20 @@ typedef union					union_d
 	}							b_bit;
 }								union_double;
 
+char		*flags_check(char *str, t_flags *flags, int sign)
+{
+	if (flags->plus && sign == 0)
+	{
+		str = ft_strjoin("+", str);
+		flags->space = 0;
+	}
+	if (flags->space && sign == 0)
+		str = ft_strjoin(" ", str);
+	if (flags->hash && flags->precision == 0)
+		str = ft_strjoin(str, ".");
+	return (str);
+}
+
 char		*str_dd(va_list *va, t_flags *flags)
 {
 	union_double bb;
@@ -483,14 +510,14 @@ char		*str_dd(va_list *va, t_flags *flags)
 		b = va_arg(*va, double);
 	if (flags->precision == -1)
 		flags->precision = 6;
-	printf("precision = %d\n",flags->precision);
 	bb.a = b;
-	printf("exp before = %lld\n", bb.b_bit.exp);
 	exp = bb.b_bit.exp - 16383;
-	printf("exp = %lld\n", exp);
+	//	flags->plus ()1
+//	flags->hash # = .
+//	flags->space ' ' = ' '
 	if (bb.b_bit.sign != 0)
-		return (ft_strplus("-", whole_part(ft_itoa_base1(bb.b_bit.mant),
-						exp, flags->precision), 0, 1));
-	return (whole_part(ft_itoa_base1(bb.b_bit.mant), exp,
-				flags->precision));
+		return (flags_check(ft_strplus("-", whole_part(ft_itoa_base1(bb.b_bit.mant),
+						exp, flags->precision), 0, 1), flags, bb.b_bit.sign));
+	return (flags_check(whole_part(ft_itoa_base1(bb.b_bit.mant), exp,
+				flags->precision), flags, bb.b_bit.sign));
 }
